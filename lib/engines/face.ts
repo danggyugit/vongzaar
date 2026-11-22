@@ -2,7 +2,7 @@ import type { FreeResult, Input } from "../types";
 import { FACE_FIELDS } from "../face-data";
 import { cleanName, cleanSpecies, josa, oneOf } from "../util";
 
-export type FaceInput = Input & { ey: string; er: string; mz: string; ct: string; vb: string };
+export type FaceInput = Input & { ey: string; er: string; mz: string; ct: string; vb: string; ph?: string };
 
 export function parse(raw: Record<string, unknown>): FaceInput | null {
   const n = cleanName(raw.n);
@@ -13,6 +13,11 @@ export function parse(raw: Record<string, unknown>): FaceInput | null {
     const v = oneOf(raw[f.key], f.options.map((o) => o.v));
     if (!v) return null;
     out[f.key] = v;
+  }
+  // 사진을 올린 경우: 사진 지문. 결제가 이 사진에 묶인다.
+  if (raw.ph !== undefined) {
+    if (typeof raw.ph !== "string" || !/^[0-9a-f]{12}$/.test(raw.ph)) return null;
+    out.ph = raw.ph;
   }
   return { n, s, ...out } as FaceInput;
 }
@@ -83,7 +88,7 @@ export function free(input: FaceInput): FreeResult {
     tags: type.tags,
     sections: [
       { icon: "👁️", heading: "눈에 담긴 이야기", body: EYES[input.ey] },
-      { icon: "🔖", heading: "한 줄 총평", body: `${josa(input.n, "은/는")} 타고난 ${type.tags[0]}이 얼굴에 드러나는 상이에요. 귀와 코, 털빛에 담긴 복은 심층 풀이에서 이어져요.` },
+      { icon: "🔖", heading: "한 줄 총평", body: `${josa(input.n, "은/는")} 타고난 ${type.tags[0]}이 얼굴에 드러나는 상이에요. 사진을 직접 보고 푸는 AI 관상 풀이에서 더 자세히 이어져요.` },
     ],
     share: `${input.n}의 관상은 "${type.name}"! ${type.line}. 우리 아이 관상도 봐보세요.`,
   };

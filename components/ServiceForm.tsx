@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FACE_FIELDS } from "@/lib/face-data";
-import { usePet } from "@/lib/pet";
+import { photoFingerprint, savePhoto, shrinkImage, usePet } from "@/lib/pet";
 import { PRODUCTS } from "@/lib/products";
 import type { Input, ProductId, Species } from "@/lib/types";
 import { encodeInput } from "@/lib/util";
@@ -28,6 +28,21 @@ export function ServiceForm({ product }: { product: Exclude<ProductId, "mbti"> }
   const [extra, setExtra] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [photo, setPhoto] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      setPhoto(await shrinkImage(f, 768));
+      setAvatar(await shrinkImage(f, 240, true));
+      setError("");
+    } catch {
+      setError("이 사진은 읽을 수 없어요. 다른 사진을 골라주세요.");
+    }
+  };
 
   useEffect(() => {
     if (!ready) return;
@@ -44,7 +59,7 @@ export function ServiceForm({ product }: { product: Exclude<ProductId, "mbti"> }
   const needsBirth = NEEDS_BIRTH.includes(product);
   const needsSize = NEEDS_SIZE.includes(product) && species === "dog";
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const n = name.trim();
     if (!n) return setError("아이 이름을 입력해 주세요.");
@@ -72,8 +87,14 @@ export function ServiceForm({ product }: { product: Exclude<ProductId, "mbti"> }
     }
 
     setBusy(true);
-    update({ n, s: species, ...(needsBirth ? { b: birth } : {}), ...(needsSize ? { z: extra.z } : {}) });
-    router.push(`/r/${product}?d=${encodeInput(input)}`);
+    if (product === "face" && photo) input.ph = await photoFingerprint(photo);
+    const d = encodeInput(input);
+    if (product === "face" && photo && !savePhoto(d, photo)) {
+      setBusy(false);
+      return setError("사진을 이 기기에 저장하지 못했어요. 시크릿 모드라면 일반 창에서 다시 시도해 주세요.");
+    }
+    update({ n, s: species, ...(needsBirth ? { b: birth } : {}), ...(needsSize ? { z: extra.z } : {}), ...(avatar ? { photo: avatar } : {}) });
+    router.push(`/r/${product}?d=${d}`);
   };
 
   return (
@@ -106,6 +127,18 @@ export function ServiceForm({ product }: { product: Exclude<ProductId, "mbti"> }
       {product === "saju" && (
         <Field label="보호자 생년월일" hint="선택 · 인연 풀이에 사용">
           <input className="input" type="date" value={extra.ob ?? ""} max={today} min="1920-01-01" onChange={(e) => set("ob")(e.target.value)} />
+        </Field>
+      )}
+
+      {product === "face" && (
+        <Field label="얼굴이 잘 보이는 사진" hint="선택 · AI 풀이에 사용">
+          <button type="button" className={`photo-pick${photo ? " has" : ""}`} onClick={() => fileInput.current?.click()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {photo ? <img src={photo} alt="고른 사진 미리보기" /> : <span aria-hidden>📷</span>}
+            <strong>{photo ? "다른 사진으로 바꾸기" : "사진 고르기"}</strong>
+            <small>정면에서 밝게 찍은 사진일수록 풀이가 정확해요</small>
+          </button>
+          <input ref={fileInput} type="file" accept="image/*" hidden onChange={onPhoto} />
         </Field>
       )}
 
@@ -150,7 +183,11 @@ export function ServiceForm({ product }: { product: Exclude<ProductId, "mbti"> }
       <button className="btn primary big" type="submit" disabled={busy}>
         {busy ? "결과 만드는 중…" : "무료로 결과 보기"}
       </button>
-      <p className="form-note">입력한 정보는 결과를 만드는 데만 쓰이고 서버에 저장되지 않아요.</p>
+      <p className="form-note">
+        {product === "face"
+          ? "사진은 이 기기에만 보관돼요. AI 풀이를 결제하면 그때 풀이를 만들기 위해 AI 서비스로 전송되고, 서버에 저장되지 않아요."
+          : "입력한 정보는 결과를 만드는 데만 쓰이고 서버에 저장되지 않아요."}
+      </p>
     </form>
   );
 }

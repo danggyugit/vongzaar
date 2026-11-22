@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Footer, Header, ProductGrid } from "@/components/Chrome";
+import { HeroIcon } from "@/components/HeroIcon";
 import { PremiumGate } from "@/components/PremiumGate";
 import { Sections } from "@/components/Sections";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -48,9 +49,7 @@ export default async function Page(props: Props) {
       <Header />
       <main className="main" style={{ ["--c" as string]: meta.color }}>
         <section className="result-hero">
-          <span className="result-emoji" aria-hidden>
-            {r.emoji}
-          </span>
+          <HeroIcon d={ctx.d} emoji={r.emoji} />
           <p className="result-kicker">{r.kicker}</p>
           <h1>{r.title}</h1>
           <p className="result-sub">{r.subtitle}</p>

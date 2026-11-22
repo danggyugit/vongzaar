@@ -180,3 +180,14 @@ button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation-duration: 0.01ms !important; }
 }
+
+/* 사진 */
+.photo-pick { width: 100%; border: 1.5px dashed color-mix(in srgb, var(--c) 55%, #fff); background: color-mix(in srgb, var(--c) 8%, #fff); border-radius: 16px; padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.photo-pick span { font-size: 34px; line-height: 1.2; }
+.photo-pick img { width: 132px; height: 132px; object-fit: cover; border-radius: 18px; margin-bottom: 6px; }
+.photo-pick strong { font-size: 15px; color: color-mix(in srgb, var(--c) 60%, #000); }
+.photo-pick small { font-size: 12.5px; color: var(--ink-3); }
+.result-photo { width: 132px; height: 132px; object-fit: cover; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.85); display: block; margin: 0 auto 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
+.gate.writing { align-items: center; text-align: center; gap: 12px; padding: 36px 18px; }
+.gate.writing .spinner { border-top-color: var(--c); }
+.ai-notice { background: #fff8e6; border: 1px solid #f1dfae; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #6b5a2a; }
